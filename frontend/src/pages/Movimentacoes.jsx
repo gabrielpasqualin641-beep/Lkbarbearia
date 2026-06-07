@@ -49,20 +49,14 @@ const Movimentacoes = () => {
       console.error('Erro ao buscar movimentações (usando local mock):', err);
       setData({
         resumo: {
-          saldo_liquido: 1025.00,
-          producao_total: 2050.00,
-          vales_pendentes_total: 150.00,
-          entrada_total: 2200.00,
-          saida_total: 1175.00
+          saldo_liquido: 0.00,
+          producao_total: 0.00,
+          vales_pendentes_total: 0.00,
+          entrada_total: 0.00,
+          saida_total: 0.00
         },
-        movimentacoes: [
-          { id: 1, data_hora: new Date().toISOString(), descricao: 'Corte Degradê - João', categoria: 'servico', barbeiro_nome: 'Lukinhas', cliente_nome: 'João', metodo_pagamento: 'pix', comissao: 22.50, valor: 45.00 },
-          { id: 2, data_hora: new Date(Date.now() - 7200000).toISOString(), descricao: 'Cabelo + Barba - Marcos', categoria: 'servico', barbeiro_nome: 'Neguin do corte', cliente_nome: 'Marcos', metodo_pagamento: 'credito', comissao: 40.00, valor: 80.00 },
-          { id: 3, data_hora: new Date(Date.now() - 86400000).toISOString(), descricao: 'Vale adiantamento', categoria: 'vale', barbeiro_nome: 'Lukinhas', cliente_nome: null, metodo_pagamento: 'pix', comissao: null, valor: -100.00 },
-          { id: 4, data_hora: new Date(Date.now() - 172800000).toISOString(), descricao: 'Compra de Pomadas Modeladoras', categoria: 'produto', barbeiro_nome: null, cliente_nome: 'Felipe', metodo_pagamento: 'dinheiro', comissao: null, valor: 50.00 },
-          { id: 5, data_hora: new Date(Date.now() - 259200000).toISOString(), descricao: 'Conta de Energia', categoria: 'despesa', barbeiro_nome: null, cliente_nome: null, metodo_pagamento: null, comissao: null, valor: -250.00 }
-        ],
-        paginacao: { pagina_atual: 1, total_paginas: 1, total_registros: 5 }
+        movimentacoes: [],
+        paginacao: { pagina_atual: 1, total_paginas: 1, total_registros: 0 }
       });
     } finally {
       setLoading(false);

@@ -37,15 +37,9 @@ const Vales = () => {
     } catch (err) {
       console.error('Erro ao buscar vales (usando local mock):', err);
       setData({
-        alertas: [
-          { id: 1, status: 'pendente_aprovacao', barbeiro_nome: 'Neguin do corte', valor: 50.00 }
-        ],
-        total_vales_ativos: 150.00,
-        historico: [
-          { id: 1, data: new Date().toISOString().split('T')[0], barbeiro_nome: 'Lukinhas', descricao: 'Adiantamento final de semana', status: 'ativo', valor: 100.00 },
-          { id: 2, data: new Date(Date.now() - 86400000).toISOString().split('T')[0], barbeiro_nome: 'Neguin do corte', descricao: 'Vale farmácia', status: 'pendente_aprovacao', valor: 50.00 },
-          { id: 3, data: new Date(Date.now() - 172800000).toISOString().split('T')[0], barbeiro_nome: 'Lukinhas', descricao: 'Adiantamento mercado', status: 'pago', valor: 150.00 },
-        ]
+        alertas: [],
+        total_vales_ativos: 0.00,
+        historico: []
       });
     } finally {
       setLoading(false);

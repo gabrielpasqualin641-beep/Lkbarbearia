@@ -43,16 +43,16 @@ const DashboardAdmin = () => {
       console.error('Erro ao buscar dados do painel (usando local mock):', err);
       setData({
         barbeiros: [
-          { id: 1, nome: 'Lukinhas', comissao_padrao: 50, producao_semanal: 1200.00, telefone: '(11) 99999-9999' },
-          { id: 2, nome: 'Neguin do corte', comissao_padrao: 50, producao_semanal: 850.00, telefone: '(11) 88888-8888' }
+          { id: 1, nome: 'Lukinhas', comissao_padrao: 50, producao_semanal: 0.00, telefone: '(11) 99999-9999' },
+          { id: 2, nome: 'Neguin do corte', comissao_padrao: 50, producao_semanal: 0.00, telefone: '(11) 88888-8888' }
         ],
-        total_equipe: 2050.00,
+        total_equipe: 0.00,
         total_integrantes: 2
       });
       setKpis({
-        saldo_liquido: 1025.00,
-        producao_total: 2050.00,
-        vales_pendentes_total: 150.00
+        saldo_liquido: 0.00,
+        producao_total: 0.00,
+        vales_pendentes_total: 0.00
       });
     } finally {
       setLoading(false);

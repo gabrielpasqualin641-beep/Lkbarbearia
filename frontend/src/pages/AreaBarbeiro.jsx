@@ -36,15 +36,12 @@ const AreaBarbeiro = () => {
     } catch (err) {
       console.error('Erro ao buscar estatísticas do barbeiro (usando local mock):', err);
       setData({
-        valor_bruto: user.id === 1 ? 1200.00 : 850.00,
-        valor_comissao: user.id === 1 ? 600.00 : 425.00,
-        total_vales_descontados: user.id === 1 ? 100.00 : 50.00,
-        liquido_a_receber: user.id === 1 ? 500.00 : 375.00,
-        total_cortes: user.id === 1 ? 25 : 18,
-        servicos: [
-          { id: 1, data_hora: new Date().toISOString(), cliente_nome: 'Roberto Silva', tipo_servico: 'Corte Degradê', valor_total: 45.00, comissao: 22.50 },
-          { id: 2, data_hora: new Date(Date.now() - 3600000).toISOString(), cliente_nome: 'Marcos Souza', tipo_servico: 'Combo Cabelo + Barba', valor_total: 80.00, comissao: 40.00 },
-        ]
+        valor_bruto: 0.00,
+        valor_comissao: 0.00,
+        total_vales_descontados: 0.00,
+        liquido_a_receber: 0.00,
+        total_cortes: 0,
+        servicos: []
       });
     } finally {
       setLoading(false);
