@@ -8,6 +8,8 @@ import {
 import api from '../services/api';
 
 const DashboardAdmin = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userName = user.nome || 'Administrador';
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
     barbeiros: [],
@@ -182,7 +184,7 @@ const DashboardAdmin = () => {
                 <Sparkles size={12} />
                 Sistema Sincronizado
               </span>
-              <h2 className="text-2xl font-extrabold font-sans">Bem-vindo, Administrador</h2>
+              <h2 className="text-2xl font-extrabold font-sans">Bem-vindo, {userName}</h2>
               <p className="text-xs text-lk-muted max-w-md">
                 Aqui você acompanha em tempo real o fluxo financeiro da barbearia, gerencia a equipe de barbeiros e analisa o fechamento semanal.
               </p>
