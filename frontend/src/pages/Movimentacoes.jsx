@@ -88,32 +88,30 @@ const Movimentacoes = () => {
     setFormError('');
     setFormSuccess('');
 
-    if (!descricao || !categoria || !valor) {
-      setFormError('Preencha os campos obrigatórios (Descrição, Categoria, Valor).');
+    if (!descricao || !valor) {
+      setFormError('Preencha os campos obrigatórios (Descrição e Valor).');
       return;
     }
 
     try {
       await api.post('/movements', {
+        categoria: 'servico',
         descricao,
-        categoria,
-        tipo_servico: categoria === 'servico' ? tipoServico : null,
-        barbeiro_id: categoria === 'servico' && barbeiroId ? parseInt(barbeiroId) : null,
         cliente_nome: clienteNome || null,
         valor: parseFloat(valor),
-        metodo_pagamento: categoria !== 'despesa' ? metodoPagamento : null
+        barbeiro_id: barbeiroId ? parseInt(barbeiroId) : null,
+        metodo_pagamento: null
       });
 
       setFormSuccess('Lançamento registrado com sucesso!');
       setDescricao('');
-      setTipoServico('');
       setBarbeiroId('');
       setClienteNome('');
       setValor('');
-      
+
       // Recarregar dados
       fetchMovements();
-      
+
       setTimeout(() => {
         setModalOpen(false);
         setFormSuccess('');
@@ -125,14 +123,14 @@ const Movimentacoes = () => {
         id: Date.now(),
         data_hora: new Date().toISOString(),
         descricao,
-        categoria,
-        barbeiro_nome: categoria === 'servico' ? (barbeiroId === '1' ? 'Lukinhas' : 'Neguin do corte') : null,
+        categoria: 'servico',
+        barbeiro_nome: barbeiroId === '1' ? 'Lukinhas' : 'Neguin do corte',
         cliente_nome: clienteNome || null,
-        metodo_pagamento: categoria !== 'despesa' ? metodoPagamento : null,
-        comissao: categoria === 'servico' ? parseFloat(valor) * 0.5 : null,
-        valor: categoria === 'despesa' || categoria === 'vale' ? -parseFloat(valor) : parseFloat(valor)
+        metodo_pagamento: null,
+        comissao: parseFloat(valor) * 0.5,
+        valor: parseFloat(valor)
       };
-      
+
       setData(prev => {
         const newMovs = [newMov, ...prev.movimentacoes];
         const val = newMov.valor;
@@ -143,7 +141,7 @@ const Movimentacoes = () => {
             entrada_total: prev.resumo.entrada_total + (isEntrada ? val : 0),
             saida_total: prev.resumo.saida_total + (!isEntrada ? Math.abs(val) : 0),
             saldo_liquido: prev.resumo.saldo_liquido + val,
-            producao_total: prev.resumo.producao_total + (categoria === 'servico' ? val : 0)
+            producao_total: prev.resumo.producao_total + val
           },
           movimentacoes: newMovs,
           paginacao: { ...prev.paginacao, total_registros: prev.paginacao.total_registros + 1 }
@@ -152,11 +150,10 @@ const Movimentacoes = () => {
 
       setFormSuccess('Lançamento registrado com sucesso (Modo Demo)!');
       setDescricao('');
-      setTipoServico('');
       setBarbeiroId('');
       setClienteNome('');
       setValor('');
-      
+
       setTimeout(() => {
         setModalOpen(false);
         setFormSuccess('');
@@ -293,18 +290,6 @@ const Movimentacoes = () => {
             {/* Tabela de Movimentações (Desktop) */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-lk-border bg-lk-dark/20 text-lk-muted text-xs font-semibold uppercase tracking-wider">
-                    <th className="p-4 pl-6">Data</th>
-                    <th className="p-4">Descrição</th>
-                    <th className="p-4">Categoria</th>
-                    <th className="p-4">Barbeiro</th>
-                    <th className="p-4">Cliente</th>
-                    <th className="p-4">Método</th>
-                    <th className="p-4 text-right">Comissão</th>
-                    <th className="p-4 pr-6 text-right">Valor</th>
-                  </tr>
-                </thead>
                 <tbody className="divide-y divide-lk-border text-sm">
                   {loading ? (
                     <tr>
@@ -322,28 +307,9 @@ const Movimentacoes = () => {
                     data.movimentacoes.map((m) => (
                       <tr key={m.id} className="hover:bg-lk-border/20 transition-colors">
                         <td className="p-4 pl-6 text-lk-muted whitespace-nowrap">
-                          {new Date(m.data_hora).toLocaleDateString('pt-BR')} {new Date(m.data_hora).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                          {`${m.cliente_nome || '—'} - ${m.metodo_pagamento || '—'} - ${m.barbeiro_nome || '—'}`}
                         </td>
-                        <td className="p-4 font-semibold text-white">{m.descricao}</td>
-                        <td className="p-4">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                            m.categoria === 'servico' ? 'bg-emerald-500/10 text-emerald-400' :
-                            m.categoria === 'vale' ? 'bg-amber-500/10 text-amber-400' :
-                            m.categoria === 'produto' ? 'bg-blue-500/10 text-blue-400' :
-                            'bg-red-500/10 text-red-400'
-                          }`}>
-                            {m.categoria === 'servico' ? 'Serviço' :
-                             m.categoria === 'vale' ? 'Vale' :
-                             m.categoria === 'produto' ? 'Produto' : 'Despesa'}
-                          </span>
-                        </td>
-                        <td className="p-4 text-lk-muted">{m.barbeiro_nome || '—'}</td>
-                        <td className="p-4 text-lk-muted">{m.cliente_nome || '—'}</td>
-                        <td className="p-4 text-lk-muted capitalize">{m.metodo_pagamento || '—'}</td>
-                        <td className="p-4 text-right text-lk-yellow font-medium">
-                          {m.comissao ? formatBRL(m.comissao) : '—'}
-                        </td>
-                        <td className={`p-4 pr-6 text-right font-bold ${m.valor >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <td className="p-4 pr-6 text-right font-bold text-emerald-400">
                           {formatBRL(m.valor)}
                         </td>
                       </tr>
@@ -361,54 +327,12 @@ const Movimentacoes = () => {
                 <div className="p-8 text-center text-lk-muted text-sm">Nenhuma movimentação registrada no período selecionado.</div>
               ) : (
                 data.movimentacoes.map((m) => (
-                  <div key={m.id} className="p-5 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-extrabold text-white text-base">{m.descricao}</h4>
-                        <span className="text-xs text-lk-muted block mt-0.5">
-                          {new Date(m.data_hora).toLocaleDateString('pt-BR')} {new Date(m.data_hora).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
-                        </span>
-                      </div>
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        m.categoria === 'servico' ? 'bg-emerald-500/10 text-emerald-400' :
-                        m.categoria === 'vale' ? 'bg-amber-500/10 text-amber-400' :
-                        m.categoria === 'produto' ? 'bg-blue-500/10 text-blue-400' :
-                        'bg-red-500/10 text-red-400'
-                      }`}>
-                        {m.categoria === 'servico' ? 'Serviço' :
-                         m.categoria === 'vale' ? 'Vale' :
-                         m.categoria === 'produto' ? 'Produto' : 'Despesa'}
-                      </span>
+                  <div key={m.id} className="flex justify-between items-center p-4 border-b border-lk-border/20">
+                    <div className="text-sm text-lk-muted">
+                      {`${m.cliente_nome || '—'} - ${m.metodo_pagamento || '—'} - ${m.barbeiro_nome || '—'}`}
                     </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-xs text-lk-muted">
-                      {m.barbeiro_nome && (
-                        <div>
-                          <span className="font-bold text-white/95">Barbeiro:</span> {m.barbeiro_nome}
-                        </div>
-                      )}
-                      {m.cliente_nome && (
-                        <div>
-                          <span className="font-bold text-white/95">Cliente:</span> {m.cliente_nome}
-                        </div>
-                      )}
-                      {m.metodo_pagamento && (
-                        <div className="capitalize">
-                          <span className="font-bold text-white/95">Método:</span> {m.metodo_pagamento}
-                        </div>
-                      )}
-                      {m.comissao && (
-                        <div>
-                          <span className="font-bold text-white/95 text-lk-yellow">Comissão:</span> <span className="text-lk-yellow font-extrabold">{formatBRL(m.comissao)}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex justify-between items-center pt-2 border-t border-lk-border/30">
-                      <span className="text-xs font-semibold text-lk-muted">Valor da Transação</span>
-                      <span className={`text-base font-black ${m.valor >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {formatBRL(m.valor)}
-                      </span>
+                    <div className="text-base font-bold text-emerald-400">
+                      {formatBRL(m.valor)}
                     </div>
                   </div>
                 ))
@@ -468,35 +392,44 @@ const Movimentacoes = () => {
 
             <form onSubmit={handleCreateMovement} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                {/* Categoria */}
+                {/* Cliente */}
                 <div>
-                  <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Categoria</label>
-                  <select
-                    value={categoria}
-                    onChange={(e) => setCategoria(e.target.value)}
-                    className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
-                  >
-                    <option value="servico">Serviço</option>
-                    <option value="produto">Venda de Produto</option>
-                    <option value="vale">Vale/Adiantamento</option>
-                    <option value="despesa">Despesa</option>
-                  </select>
-                </div>
-
-                {/* Valor */}
-                <div>
-                  <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Valor (R$)</label>
+                  <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Nome do Cliente</label>
                   <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Ex: 85.00"
-                    value={valor}
-                    onChange={(e) => setValor(e.target.value)}
+                    type="text"
+                    placeholder="Ex: Rafael Silva"
+                    value={clienteNome}
+                    onChange={(e) => setClienteNome(e.target.value)}
                     className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
                   />
                 </div>
+                {/* Barbeiro */}
+                <div>
+                  <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Barbeiro</label>
+                  <select
+                    value={barbeiroId}
+                    onChange={(e) => setBarbeiroId(e.target.value)}
+                    className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
+                  >
+                    <option value="">Selecione...</option>
+                    {barbeiros.map(b => (
+                      <option key={b.id} value={b.id}>{b.nome}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-
+              {/* Valor */}
+              <div>
+                <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Valor (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 85.00"
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value)}
+                  className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
+                />
+              </div>
               {/* Descrição */}
               <div>
                 <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Descrição</label>
@@ -508,9 +441,6 @@ const Movimentacoes = () => {
                   className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
                 />
               </div>
-
-              {categoria === 'servico' && (
-                <div className="grid grid-cols-2 gap-4">
                   {/* Barbeiro */}
                   <div>
                     <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Barbeiro</label>
