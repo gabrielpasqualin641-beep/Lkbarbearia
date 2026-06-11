@@ -88,8 +88,16 @@ const Movimentacoes = () => {
     setFormError('');
     setFormSuccess('');
 
-    if (!descricao || !valor) {
-      setFormError('Preencha os campos obrigatórios (Descrição e Valor).');
+    if (!clienteNome) {
+      setFormError('Preencha o nome do cliente.');
+      return;
+    }
+    if (!barbeiroId) {
+      setFormError('Selecione o barbeiro.');
+      return;
+    }
+    if (!valor) {
+      setFormError('Preencha o campo obrigatório (Valor).');
       return;
     }
 
@@ -307,7 +315,7 @@ const Movimentacoes = () => {
                     data.movimentacoes.map((m) => (
                       <tr key={m.id} className="hover:bg-lk-border/20 transition-colors">
                         <td className="p-4 pl-6 text-lk-muted whitespace-nowrap">
-                          {`${m.cliente_nome || '—'} - ${m.metodo_pagamento || '—'} - ${m.barbeiro_nome || '—'}`}
+                          {m.cliente_nome || '—'}
                         </td>
                         <td className="p-4 pr-6 text-right font-bold text-emerald-400">
                           {formatBRL(m.valor)}
@@ -328,9 +336,7 @@ const Movimentacoes = () => {
               ) : (
                 data.movimentacoes.map((m) => (
                   <div key={m.id} className="flex justify-between items-center p-4 border-b border-lk-border/20">
-                    <div className="text-sm text-lk-muted">
-                      {`${m.cliente_nome || '—'} - ${m.metodo_pagamento || '—'} - ${m.barbeiro_nome || '—'}`}
-                    </div>
+                      {m.cliente_nome || '—'}
                     <div className="text-base font-bold text-emerald-400">
                       {formatBRL(m.valor)}
                     </div>
@@ -382,7 +388,7 @@ const Movimentacoes = () => {
                 {formError}
               </div>
             )}
-            
+
             {formSuccess && (
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-sm flex items-center gap-2">
                 <CheckCircle2 size={16} />
@@ -391,116 +397,32 @@ const Movimentacoes = () => {
             )}
 
             <form onSubmit={handleCreateMovement} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Cliente */}
-                <div>
-                  <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Nome do Cliente</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Rafael Silva"
-                    value={clienteNome}
-                    onChange={(e) => setClienteNome(e.target.value)}
-                    className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
-                  />
-                </div>
-                {/* Barbeiro */}
-                <div>
-                  <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Barbeiro</label>
-                  <select
-                    value={barbeiroId}
-                    onChange={(e) => setBarbeiroId(e.target.value)}
-                    className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
-                  >
-                    <option value="">Selecione...</option>
-                    {barbeiros.map(b => (
-                      <option key={b.id} value={b.id}>{b.nome}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              {/* Valor */}
-              <div>
-                <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Valor (R$)</label>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  placeholder="Nome do Cliente"
+                  value={clienteNome}
+                  onChange={(e) => setClienteNome(e.target.value)}
+                  className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
+                />
+                <select
+                  value={barbeiroId}
+                  onChange={(e) => setBarbeiroId(e.target.value)}
+                  className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
+                >
+                  <option value="">Selecione o Barbeiro</option>
+                  {barbeiros.map(b => (
+                    <option key={b.id} value={b.id}>{b.nome}</option>
+                  ))}
+                </select>
                 <input
                   type="number"
-                  step="0.01"
-                  placeholder="Ex: 85.00"
+                  placeholder="Valor (R$)"
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
                   className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
                 />
               </div>
-              {/* Descrição */}
-              <div>
-                <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Descrição</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Corte Degradê + Barba"
-                  value={descricao}
-                  onChange={(e) => setDescricao(e.target.value)}
-                  className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
-                />
-              </div>
-                  {/* Barbeiro */}
-                  <div>
-                    <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Barbeiro</label>
-                    <select
-                      value={barbeiroId}
-                      onChange={(e) => setBarbeiroId(e.target.value)}
-                      className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
-                    >
-                      <option value="">Selecione...</option>
-                      {barbeiros.map(b => (
-                        <option key={b.id} value={b.id}>{b.nome}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Tipo Serviço */}
-                  <div>
-                    <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Tipo de Serviço</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Corte + Barba"
-                      value={tipoServico}
-                      onChange={(e) => setTipoServico(e.target.value)}
-                      className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {categoria !== 'despesa' && (
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Cliente */}
-                  <div>
-                    <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Nome do Cliente</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Rafael Silva"
-                      value={clienteNome}
-                      onChange={(e) => setClienteNome(e.target.value)}
-                      className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
-                    />
-                  </div>
-
-                  {/* Método Pagamento */}
-                  <div>
-                    <label className="block text-xs text-lk-muted font-bold uppercase tracking-wider mb-1">Pagamento</label>
-                    <select
-                      value={metodoPagamento}
-                      onChange={(e) => setMetodoPagamento(e.target.value)}
-                      className="w-full bg-lk-dark border border-lk-border text-white text-sm py-2.5 px-3.5 rounded-xl focus:outline-none focus:border-lk-yellow"
-                    >
-                      <option value="pix">Pix</option>
-                      <option value="credito">Crédito</option>
-                      <option value="debito">Débito</option>
-                      <option value="dinheiro">Dinheiro</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -513,7 +435,7 @@ const Movimentacoes = () => {
                   type="submit"
                   className="flex-1 bg-lk-yellow text-lk-dark font-bold py-3 rounded-xl hover:bg-[#e0b810] transition-colors"
                 >
-                  Salvar Lançamento
+                  + REGISTRAR
                 </button>
               </div>
             </form>

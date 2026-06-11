@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import { Key } from 'lucide-react';
 import { 
   Scissors, DollarSign, Clock, AlertCircle, Plus, CheckCircle2, 
   HelpCircle, Sparkles, LogOut 
@@ -10,6 +11,16 @@ import api from '../services/api';
 const AreaBarbeiro = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [loading, setLoading] = useState(false);
+  const [pin, setPin] = useState(''); // 4‑digit PIN input
+  const [pinPadOpen, setPinPadOpen] = useState(false);
+  const [selectedBarber, setSelectedBarber] = useState(null);
+  const [topProducer, setTopProducer] = useState({ nome: '', weeklyTotal: 0 });
+  
+  // Mock barbers with PINs and weekly totals (demo data)
+  const mockBarbers = [
+    { id: 1, nome: 'Lukinhas', pin: '1111', weeklyTotal: 1250 },
+    { id: 2, nome: 'Neguin do corte', pin: '2222', weeklyTotal: 980 }
+  ];
   
   const [data, setData] = useState({
     valor_bruto: 0,
@@ -50,6 +61,12 @@ const AreaBarbeiro = () => {
 
   useEffect(() => {
     loadBarberStats();
+  }, []);
+
+  // Compute top producer from mockBarbers on mount
+  useEffect(() => {
+    const top = mockBarbers.reduce((prev, curr) => (curr.weeklyTotal > prev.weeklyTotal ? curr : prev), mockBarbers[0]);
+    setTopProducer(top);
   }, []);
 
   const handleRequestVale = async (e) => {
@@ -113,113 +130,168 @@ const AreaBarbeiro = () => {
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar title={`Painel de Produção — ${user.nome}`} />
 
-        <main className="flex-1 p-8 overflow-y-auto space-y-6">
-          
-          {/* Welcome Card */}
-          <div className="bg-gradient-to-r from-lk-card to-lk-border border border-lk-border p-6 rounded-3xl flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs text-lk-yellow font-extrabold uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles size={12} />
-                Minha Carteira
-              </span>
-              <h2 className="text-2xl font-extrabold font-sans">Olá, {user.nome}!</h2>
-              <p className="text-xs text-lk-muted max-w-sm">
-                Acompanhe o fechamento de seus cortes, confira suas comissões e solicite adiantamentos.
-              </p>
+        {selectedBarber ? (
+          <>
+            {/* Top Producer Banner */}
+            <div className="bg-lk-card border border-lk-border p-4 rounded-xl mb-6 flex items-center justify-between">
+              <span className="text-sm font-medium text-lk-muted">Top Produtor da Semana</span>
+              <span className="text-lg font-bold text-lk-yellow">{topProducer.nome} — {formatBRL(topProducer.weeklyTotal)}</span>
             </div>
+
+            <main className="flex-1 p-8 overflow-y-auto space-y-6">
+              {/* Welcome Card */}
+              <div className="bg-gradient-to-r from-lk-card to-lk-border border border-lk-border p-6 rounded-3xl flex items-center justify-between">
+                <div className="space-y-1">
+                  <span className="text-xs text-lk-yellow font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={12} />
+                    Minha Carteira
+                  </span>
+                  <h2 className="text-2xl font-extrabold font-sans">Olá, {user.nome}!</h2>
+                  <p className="text-xs text-lk-muted max-w-sm">
+                    Acompanhe o fechamento de seus cortes, confira suas comissões e solicite adiantamentos.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setModalOpen(true)}
+                  className="bg-lk-yellow text-lk-dark hover:bg-[#e0b810] px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-lk-yellow/10 transition-all duration-300"
+                >
+                  <Plus size={16} />
+                  <span>Solicitar Adiantamento</span>
+                </button>
+              </div>
+
+              {/* Cards de Métricas Individuais */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {/* Bruto */}
+                <div className="bg-lk-card border border-lk-border p-5 rounded-2xl">
+                  <span className="text-xs text-lk-muted font-bold uppercase tracking-wider">Total Produzido (Bruto)</span>
+                  <h3 className="text-2xl font-black text-white mt-1">{formatBRL(data.valor_bruto)}</h3>
+                  <div className="text-[11px] text-lk-muted mt-2">Faturamento gerado para a casa</div>
+                </div>
+
+                {/* Comissao */}
+                <div className="bg-lk-card border border-lk-border p-5 rounded-2xl">
+                  <span className="text-xs text-lk-muted font-bold uppercase tracking-wider">Minha Comissão</span>
+                  <h3 className="text-2xl font-black text-lk-yellow mt-1">{formatBRL(data.valor_comissao)}</h3>
+                  <span className="text-[10px] text-lk-yellow font-medium mt-2 bg-lk-yellow/5 px-2 py-0.5 rounded-full border border-lk-yellow/10 inline-block">
+                    Taxa: {user.comissao_padrao || 40}%
+                  </span>
+                </div>
+
+                {/* Vales descontados */}
+                <div className="bg-lk-card border border-lk-border p-5 rounded-2xl">
+                  <span className="text-xs text-lk-muted font-bold uppercase tracking-wider">Vales a Descontar</span>
+                  <h3 className="text-2xl font-black text-red-400 mt-1">{formatBRL(data.total_vales_descontados)}</h3>
+                  <div className="text-[11px] text-red-400/80 mt-2">Será deduzido no fechamento</div>
+                </div>
+
+                {/* Líquido a Receber */}
+                <div className="bg-lk-card border border-lk-border p-5 rounded-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-emerald-500/5 blur-xl"></div>
+                  <span className="text-xs text-lk-muted font-bold uppercase tracking-wider">Líquido a Receber</span>
+                  <h3 className="text-2xl font-black text-emerald-400 mt-1">{formatBRL(data.liquido_a_receber)}</h3>
+                  <div className="text-[11px] text-emerald-400 mt-2 font-semibold">Saldo líquido disponível</div>
+                </div>
+              </div>
+
+              {/* Serviços Recentes */}
+              <div className="bg-lk-card border border-lk-border rounded-2xl p-6">
+                <h3 className="text-lg font-bold font-sans mb-4">Meus Serviços Recentes</h3>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-lk-border text-lk-muted text-xs font-semibold uppercase tracking-wider">
+                        <th className="pb-3 pl-2">Data/Hora</th>
+                        <th className="pb-3">Cliente</th>
+                        <th className="pb-3">Serviço</th>
+                        <th className="pb-3 text-right">Valor do Serviço</th>
+                        <th className="pb-3 text-right pr-2">Minha Comissão</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-lk-border text-sm">
+                      {loading ? (
+                        <tr>
+                          <td colSpan="5" className="py-8 text-center text-lk-muted">
+                            Carregando serviços...
+                          </td>
+                        </tr>
+                      ) : data.servicos.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="py-8 text-center text-lk-muted">
+                            Nenhum serviço registrado recentemente.
+                          </td>
+                        </tr>
+                      ) : (
+                        data.servicos.map((s) => (
+                          <tr key={s.id} className="hover:bg-lk-border/10 transition-colors">
+                            <td className="py-3.5 pl-2 text-lk-muted">
+                              {new Date(s.data_hora).toLocaleDateString('pt-BR')} {new Date(s.data_hora).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                            </td>
+                            <td className="py-3.5 font-bold text-white">{s.cliente_nome || '—'}</td>
+                            <td className="py-3.5 text-lk-muted">{s.tipo_servico || '—'}</td>
+                            <td className="py-3.5 text-right font-semibold text-white">{formatBRL(s.valor_total)}</td>
+                            <td className="py-3.5 text-right pr-2 font-bold text-lk-yellow">{formatBRL(s.comissao)}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </main>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center flex-1 p-8">
+            <h2 className="text-2xl font-bold mb-4">Acesso à Área de Produção</h2>
             <button
-              onClick={() => setModalOpen(true)}
-              className="bg-lk-yellow text-lk-dark hover:bg-[#e0b810] px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-lk-yellow/10 transition-all duration-300"
+              onClick={() => setPinPadOpen(true)}
+              className="bg-lk-yellow text-lk-dark px-6 py-3 rounded-xl font-semibold hover:bg-[#e0b810]"
             >
-              <Plus size={16} />
-              <span>Solicitar Adiantamento</span>
+              Entrar com PIN
             </button>
           </div>
-
-          {/* Cards de Métricas Individuais */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* Bruto */}
-            <div className="bg-lk-card border border-lk-border p-5 rounded-2xl">
-              <span className="text-xs text-lk-muted font-bold uppercase tracking-wider">Total Produzido (Bruto)</span>
-              <h3 className="text-2xl font-black text-white mt-1">{formatBRL(data.valor_bruto)}</h3>
-              <div className="text-[11px] text-lk-muted mt-2">Faturamento gerado para a casa</div>
-            </div>
-
-            {/* Comissao */}
-            <div className="bg-lk-card border border-lk-border p-5 rounded-2xl">
-              <span className="text-xs text-lk-muted font-bold uppercase tracking-wider">Minha Comissão</span>
-              <h3 className="text-2xl font-black text-lk-yellow mt-1">{formatBRL(data.valor_comissao)}</h3>
-              <span className="text-[10px] text-lk-yellow font-medium mt-2 bg-lk-yellow/5 px-2 py-0.5 rounded-full border border-lk-yellow/10 inline-block">
-                Taxa: {user.comissao_padrao || 40}%
-              </span>
-            </div>
-
-            {/* Vales descontados */}
-            <div className="bg-lk-card border border-lk-border p-5 rounded-2xl">
-              <span className="text-xs text-lk-muted font-bold uppercase tracking-wider">Vales a Descontar</span>
-              <h3 className="text-2xl font-black text-red-400 mt-1">{formatBRL(data.total_vales_descontados)}</h3>
-              <div className="text-[11px] text-red-400/80 mt-2">Será deduzido no fechamento</div>
-            </div>
-
-            {/* Líquido a Receber */}
-            <div className="bg-lk-card border border-lk-border p-5 rounded-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-emerald-500/5 blur-xl"></div>
-              <span className="text-xs text-lk-muted font-bold uppercase tracking-wider">Líquido a Receber</span>
-              <h3 className="text-2xl font-black text-emerald-400 mt-1">{formatBRL(data.liquido_a_receber)}</h3>
-              <div className="text-[11px] text-emerald-400 mt-2 font-semibold">Saldo líquido disponível</div>
-            </div>
-          </div>
-
-          {/* Serviços Recentes */}
-          <div className="bg-lk-card border border-lk-border rounded-2xl p-6">
-            <h3 className="text-lg font-bold font-sans mb-4">Meus Serviços Recentes</h3>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-lk-border text-lk-muted text-xs font-semibold uppercase tracking-wider">
-                    <th className="pb-3 pl-2">Data/Hora</th>
-                    <th className="pb-3">Cliente</th>
-                    <th className="pb-3">Serviço</th>
-                    <th className="pb-3 text-right">Valor do Serviço</th>
-                    <th className="pb-3 text-right pr-2">Minha Comissão</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-lk-border text-sm">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="5" className="py-8 text-center text-lk-muted">
-                        Carregando serviços...
-                      </td>
-                    </tr>
-                  ) : data.servicos.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="py-8 text-center text-lk-muted">
-                        Nenhum serviço registrado recentemente.
-                      </td>
-                    </tr>
-                  ) : (
-                    data.servicos.map((s) => (
-                      <tr key={s.id} className="hover:bg-lk-border/10 transition-colors">
-                        <td className="py-3.5 pl-2 text-lk-muted">
-                          {new Date(s.data_hora).toLocaleDateString('pt-BR')} {new Date(s.data_hora).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
-                        </td>
-                        <td className="py-3.5 font-bold text-white">{s.cliente_nome || '—'}</td>
-                        <td className="py-3.5 text-lk-muted">{s.tipo_servico || '—'}</td>
-                        <td className="py-3.5 text-right font-semibold text-white">{formatBRL(s.valor_total)}</td>
-                        <td className="py-3.5 text-right pr-2 font-bold text-lk-yellow">{formatBRL(s.comissao)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-        </main>
+        )}
       </div>
 
-      {/* Modal Solicitar Vale */}
+          {/* PIN Pad Modal */}
+          {pinPadOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-[#09090b]/80 backdrop-blur-sm" onClick={() => setPinPadOpen(false)}></div>
+              <div className="bg-lk-card border border-lk-border rounded-2xl p-6 z-10 w-full max-w-xs">
+                <h3 className="text-xl font-bold mb-4">Digite seu PIN</h3>
+                <div className="text-2xl font-mono text-center mb-4">{pin.padEnd(4, '_')}</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[1,2,3,4,5,6,7,8,9,'C',0,'E'].map((key) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        if (key === 'C') { setPin(''); }
+                        else if (key === 'E') {
+                          const barber = mockBarbers.find(b => b.pin === pin);
+                          if (barber) {
+                            setSelectedBarber(barber);
+                            setPin('');
+                            setPinPadOpen(false);
+                          } else {
+                            alert('PIN inválido');
+                            setPin('');
+                          }
+                        } else {
+                          if (pin.length < 4) setPin(prev => prev + key);
+                        }
+                      }}
+                      className="bg-lk-dark hover:bg-lk-border text-white py-2 rounded-xl"
+                    >
+                      {key}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Solicitar Vale */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#09090b]/80 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
